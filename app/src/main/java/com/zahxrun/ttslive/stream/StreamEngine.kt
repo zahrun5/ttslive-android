@@ -27,6 +27,11 @@ class StreamEngine private constructor(private val app: Application) {
         private set
     var streamKey by mutableStateOf(SecretStore.get(app, KEY_YT))
 
+    /** Alamat server RTMP/RTMPS tujuan (YouTube, TikTok Live Studio, dll). Default: YouTube. */
+    var streamUrl by mutableStateOf(
+        app.getSharedPreferences("ttslive", Context.MODE_PRIVATE).getString(KEY_URL, YOUTUBE_URL) ?: YOUTUBE_URL,
+    )
+
     /** Dipasang [LiveService] supaya notifikasi ikut berubah. */
     var onStatus: (() -> Unit)? = null
 
@@ -41,7 +46,7 @@ class StreamEngine private constructor(private val app: Application) {
         }
 
         override fun onConnectionSuccess() {
-            main.post { if (stream != null) set(StreamState.LIVE, "Video terkirim ke YouTube") }
+            main.post { if (stream != null) set(StreamState.LIVE, "Video terkirim ke server") }
         }
 
         override fun onConnectionFailed(reason: String) {
@@ -72,14 +77,23 @@ class StreamEngine private constructor(private val app: Application) {
 
     fun saveKey() {
         SecretStore.put(app, KEY_YT, streamKey.trim())
+        app.getSharedPreferences("ttslive", Context.MODE_PRIVATE).edit().putString(KEY_URL, streamUrl.trim()).apply()
+    }
+
+    /** URL lengkap = alamat server + "/" + stream key (key boleh kosong kalau sudah ada di URL). */
+    private fun targetUrl(): String? {
+        val base = streamUrl.trim().trimEnd('/')
+        if (!base.startsWith("rtmp://") && !base.startsWith("rtmps://")) return null
+        val key = streamKey.trim()
+        return if (key.isEmpty()) base else "$base/$key"
     }
 
     /** Dipanggil dari UI. Encoder baru dibuat di service lewat [begin]. */
     fun requestStart() {
         saveKey()
         if (isActive) return
-        if (streamKey.isBlank()) {
-            set(StreamState.ERROR, "Stream key kosong")
+        if (targetUrl() == null) {
+            set(StreamState.ERROR, "URL server harus diawali rtmp:// atau rtmps://")
             return
         }
         set(StreamState.STARTING, "Menyiapkan encoder...")
@@ -89,20 +103,20 @@ class StreamEngine private constructor(private val app: Application) {
     /** Dipanggil [LiveService] (main thread) dengan context service. */
     fun begin(ctx: Context) {
         if (stream != null) return
-        val key = streamKey.trim()
-        if (key.isEmpty()) {
-            fail("Stream key kosong")
+        val target = targetUrl()
+        if (target == null) {
+            fail("URL server harus diawali rtmp:// atau rtmps://")
             return
         }
         var s: RtmpStream? = null
         try {
             s = RtmpStream(ctx, checker, CanvasVideoSource(ctx) { StreamCanvasRoot() }, NoAudioSource())
-            val ok = s.prepareVideo(WIDTH, HEIGHT, VIDEO_BITRATE, FPS, 2, 0) &&
+            val ok = s.prepareVideo(WIDTH, HEIGHT, VIDEO_BITRATE, FPS, 1, 0) &&
                 s.prepareAudio(44100, true, 64 * 1000)
             if (!ok) throw IllegalStateException("Encoder menolak konfigurasi video/audio")
             s.getStreamClient().setReTries(MAX_RETRIES)
             stream = s
-            s.startStream("$YOUTUBE_URL/$key")
+            s.startStream(target)
         } catch (e: Exception) {
             if (stream == null) runCatching { s?.release() }
             fail("Gagal memulai stream: ${e.message}")
@@ -145,6 +159,7 @@ class StreamEngine private constructor(private val app: Application) {
 
     companion object {
         private const val KEY_YT = "youtube_stream_key"
+        private const val KEY_URL = "stream_url"
         private const val IDLE_DETAIL = "Stream belum jalan"
         private const val YOUTUBE_URL = "rtmps://a.rtmps.youtube.com:443/live2"
         private const val WIDTH = 720

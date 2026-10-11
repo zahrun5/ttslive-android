@@ -46,6 +46,9 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     fun toggleRotationMode(m: GameMode) = c.toggleRotationMode(m)
     fun setProfilePhotos(v: Boolean) = c.enableProfilePhotos(v)
 
+    var streamUrl: String
+        get() = e.streamUrl
+        set(v) { e.streamUrl = v }
     var streamKey: String
         get() = e.streamKey
         set(v) { e.streamKey = v }

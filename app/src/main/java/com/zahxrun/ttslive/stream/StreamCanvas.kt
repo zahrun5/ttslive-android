@@ -9,6 +9,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -44,8 +47,22 @@ fun StreamCanvasRoot() {
                 )
             }
             PulseDot(Modifier.align(Alignment.TopEnd).padding(8.dp))
+            MotionBar(Modifier.align(Alignment.BottomCenter))
         }
     }
+}
+
+/**
+ * Garis tipis yang terus bergerak di dasar layar. Tujuannya memaksa layar virtual menghasilkan frame baru
+ * tiap saat, supaya video tidak "membeku" ketika game sedang diam.
+ */
+@Composable
+private fun MotionBar(modifier: Modifier = Modifier) {
+    LinearProgressIndicator(
+        modifier = modifier.fillMaxWidth().height(3.dp),
+        color = Color(0xFFEF4444),
+        trackColor = Color.Transparent,
+    )
 }
 
 /**

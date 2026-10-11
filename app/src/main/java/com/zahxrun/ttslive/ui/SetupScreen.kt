@@ -135,11 +135,18 @@ fun SetupScreen(
         )
 
         Spacer(Modifier.height(12.dp))
-        Text("Stream video ke YouTube", color = TextMain, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text("Stream video (YouTube, TikTok, dll)", color = TextMain, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        OutlinedTextField(
+            value = vm.streamUrl,
+            onValueChange = { vm.streamUrl = it },
+            label = { Text("URL server (rtmp:// atau rtmps://)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
         OutlinedTextField(
             value = vm.streamKey,
             onValueChange = { vm.streamKey = it },
-            label = { Text("Stream key YouTube") },
+            label = { Text("Stream key") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
@@ -152,13 +159,13 @@ fun SetupScreen(
         } else {
             Button(
                 onClick = { vm.startStream() },
-                enabled = vm.streamKey.isNotBlank(),
+                enabled = vm.streamUrl.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Mulai Stream YouTube") }
+            ) { Text("Mulai Stream") }
         }
         Text(vm.streamDetail, color = Muted, fontSize = 12.sp)
         Text(
-            "Saat ini hanya game TTS yang bisa distream. Stream berjalan terpisah dari koneksi komentar TikTok.",
+            "Saat ini hanya game TTS yang bisa distream. Isi URL server + stream key dari platform tujuan (YouTube: rtmps://a.rtmps.youtube.com:443/live2). Stream berjalan terpisah dari koneksi komentar TikTok.",
             color = Muted,
             fontSize = 12.sp,
         )
