@@ -13,14 +13,13 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import com.zahxrun.ttslive.stream.StreamEngine
-import com.zahxrun.ttslive.stream.StreamState
 import com.zahxrun.ttslive.tiktok.ConnState
 
 /**
- * Foreground service: menjaga proses tetap hidup selama live (komentar TikTok) atau stream video
- * berjalan, memegang WakeLock + WifiLock, dan menampilkan notifikasi status dengan tombol Stop.
- * Logika sendiri ada di [LiveController] dan [StreamEngine].
+ * Foreground service: menjaga proses tetap hidup selama live komentar TikTok berjalan,
+ * memegang WakeLock + WifiLock, dan menampilkan notifikasi status dengan tombol Stop.
+ * Logika sendiri ada di [LiveController]. (Streaming video RTMP dinonaktifkan untuk
+ * mengurangi delay.)
  */
 class LiveService : Service() {
 
@@ -42,17 +41,14 @@ class LiveService : Service() {
 
         acquireLocks()
         LiveController.get(this).onStatus = { _, _ -> refreshNotification() }
-        StreamEngine.get(this).onStatus = { refreshNotification() }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> {
-                StreamEngine.get(this).stop()
                 LiveController.get(this).stopLive()
                 stopSelf()
             }
-            ACTION_START_STREAM -> StreamEngine.get(this).begin(this)
         }
         // Kalau proses dimatikan sistem, controller ikut hilang, jadi tidak ada gunanya restart otomatis.
         return START_NOT_STICKY
@@ -60,9 +56,6 @@ class LiveService : Service() {
 
     override fun onDestroy() {
         LiveController.get(this).onStatus = null
-        val engine = StreamEngine.get(this)
-        engine.onStatus = null
-        engine.shutdown()
         releaseLocks()
         stopForeground(STOP_FOREGROUND_REMOVE)
         super.onDestroy()
@@ -111,7 +104,6 @@ class LiveService : Service() {
     @Suppress("DEPRECATION")
     private fun buildNotification(): Notification {
         val controller = LiveController.get(this)
-        val engine = StreamEngine.get(this)
 
         val open = PendingIntent.getActivity(
             this, 0,
@@ -130,12 +122,6 @@ class LiveService : Service() {
             stop,
         ).build()
 
-        val text = if (engine.state != StreamState.IDLE) {
-            "Stream: ${engine.detail} \u2022 ${controller.connDetail}"
-        } else {
-            controller.connDetail
-        }
-
         val builder = if (Build.VERSION.SDK_INT >= 26) {
             Notification.Builder(this, CHANNEL_ID)
         } else {
@@ -144,7 +130,7 @@ class LiveService : Service() {
         return builder
             .setSmallIcon(android.R.drawable.stat_sys_upload)
             .setContentTitle("TTS Live: ${label(controller.connState)}")
-            .setContentText(text)
+            .setContentText(controller.connDetail)
             .setContentIntent(open)
             .addAction(stopAction)
             .setOngoing(true)
@@ -165,7 +151,6 @@ class LiveService : Service() {
         private const val CHANNEL_ID = "live"
         private const val NOTIF_ID = 1
         private const val ACTION_STOP = "com.zahxrun.ttslive.STOP"
-        private const val ACTION_START_STREAM = "com.zahxrun.ttslive.START_STREAM"
         private const val WAKE_TIMEOUT_MS = 24L * 60 * 60 * 1000
 
         private fun launch(context: Context, intent: Intent) {
@@ -176,15 +161,10 @@ class LiveService : Service() {
             launch(context, Intent(context, LiveService::class.java))
         }
 
-        fun startStream(context: Context) {
-            launch(context, Intent(context, LiveService::class.java).setAction(ACTION_START_STREAM))
-        }
-
-        /** Hentikan service hanya kalau komentar TikTok dan stream video sama-sama tidak aktif. */
+        /** Hentikan service hanya kalau komentar TikTok tidak aktif. */
         fun stopIfIdle(context: Context) {
             val liveActive = LiveController.get(context).isLive
-            val streamActive = StreamEngine.get(context).isActive
-            if (!liveActive && !streamActive) {
+            if (!liveActive) {
                 context.stopService(Intent(context, LiveService::class.java))
             }
         }

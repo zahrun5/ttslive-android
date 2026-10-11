@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zahxrun.ttslive.GameMode
 import com.zahxrun.ttslive.LiveViewModel
-import com.zahxrun.ttslive.stream.StreamState
 import com.zahxrun.ttslive.tiktok.ConnState
 
 @Composable
@@ -135,37 +134,9 @@ fun SetupScreen(
         )
 
         Spacer(Modifier.height(12.dp))
-        Text("Stream video (YouTube, TikTok, dll)", color = TextMain, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-        OutlinedTextField(
-            value = vm.streamUrl,
-            onValueChange = { vm.streamUrl = it },
-            label = { Text("URL server (rtmp:// atau rtmps://)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = vm.streamKey,
-            onValueChange = { vm.streamKey = it },
-            label = { Text("Stream key") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        val streaming = vm.streamState == StreamState.STARTING || vm.streamState == StreamState.LIVE
-        if (streaming) {
-            OutlinedButton(onClick = { vm.stopStream() }, modifier = Modifier.fillMaxWidth()) {
-                Text("Hentikan Stream")
-            }
-        } else {
-            Button(
-                onClick = { vm.startStream() },
-                enabled = vm.streamUrl.isNotBlank(),
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("Mulai Stream") }
-        }
-        Text(vm.streamDetail, color = Muted, fontSize = 12.sp)
         Text(
-            "Saat ini hanya game TTS yang bisa distream. Isi URL server + stream key dari platform tujuan (YouTube: rtmps://a.rtmps.youtube.com:443/live2). Stream berjalan terpisah dari koneksi komentar TikTok.",
+            "Mode latensi-rendah: komentar penonton masuk real-time lewat EulerStream. " +
+                "Untuk siar video, pakai screen share / OBS dari PC (RTMP streaming dinonaktifkan demi mengurangi delay).",
             color = Muted,
             fontSize = 12.sp,
         )
