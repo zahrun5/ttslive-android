@@ -3,6 +3,8 @@ package com.zahxrun.ttslive
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import com.zahxrun.ttslive.engine.RoomSnapshot
+import com.zahxrun.ttslive.stream.StreamEngine
+import com.zahxrun.ttslive.stream.StreamState
 import com.zahxrun.ttslive.tiktok.ConnState
 
 enum class GameMode(val label: String) {
@@ -21,6 +23,7 @@ enum class GameMode(val label: String) {
 class LiveViewModel(app: Application) : AndroidViewModel(app) {
 
     private val c = LiveController.get(app)
+    private val e = StreamEngine.get(app)
 
     var username: String
         get() = c.username
@@ -42,6 +45,17 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     fun setRotationEnabled(v: Boolean) = c.enableRotation(v)
     fun toggleRotationMode(m: GameMode) = c.toggleRotationMode(m)
     fun setProfilePhotos(v: Boolean) = c.enableProfilePhotos(v)
+
+    var streamUrl: String
+        get() = e.streamUrl
+        set(v) { e.streamUrl = v }
+    var streamKey: String
+        get() = e.streamKey
+        set(v) { e.streamKey = v }
+    val streamState: StreamState get() = e.state
+    val streamDetail: String get() = e.detail
+    fun startStream() = e.requestStart()
+    fun stopStream() = e.stop()
 
     fun switchGame(mode: GameMode) = c.switchGame(mode)
     fun saveSettings() = c.saveSettings()

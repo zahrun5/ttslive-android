@@ -8,7 +8,8 @@ plugins {
 
 android {
     namespace = "com.zahxrun.ttslive"
-    compileSdk = 35
+    // RootEncoder 2.6.x menarik CameraX 1.5 yang mewajibkan compileSdk 36.
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.zahxrun.ttslive"
@@ -52,7 +53,13 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.savedstate:viewmodel-savedstate:1.2.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("io.coil-kt:coil-compose:2.7.0")
+    // Encoder + RTMP untuk streaming kanvas game ke YouTube/TikTok.
+    // 2.6.7 dibuild dengan Kotlin 2.2.21 + AGP 8.13.2, jadi cocok dengan toolchain di atas.
+    // (2.8.1 dibuild dengan Kotlin 2.4 dan tidak bisa dibaca Kotlin 2.0/2.2.)
+    implementation("com.github.pedroSG94.RootEncoder:library:2.6.7")
 }
