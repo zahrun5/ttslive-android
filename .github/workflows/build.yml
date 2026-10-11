@@ -16,7 +16,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.14.3
-      - run: gradle assembleDebug --no-daemon --stacktrace
+      - run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+      - name: Tampilkan error build sebagai annotation
+        if: failure()
+        run: |
+          grep -E '^e: |error:|What went wrong|Could not resolve|Unresolved|Execution failed' -A2 build.log | head -40 | while IFS= read -r l; do echo "::error::${l//%/%25}"; done || true
       - uses: actions/upload-artifact@v4
         with:
           name: tts-live-debug-apk
