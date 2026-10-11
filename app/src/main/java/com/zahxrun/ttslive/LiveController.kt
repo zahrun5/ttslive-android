@@ -91,7 +91,7 @@ class LiveController private constructor(private val app: Application) {
         return if (set.size >= 2) set else GameMode.entries.toSet()
     }
 
-    fun setRotationEnabled(v: Boolean) {
+    fun enableRotation(v: Boolean) {
         rotationEnabled = v
         prefs.edit().putBoolean(KEY_ROTATE, v).apply()
     }
@@ -104,7 +104,7 @@ class LiveController private constructor(private val app: Application) {
         prefs.edit().putString(KEY_POOL, next.joinToString(",") { it.name }).apply()
     }
 
-    fun setProfilePhotos(v: Boolean) {
+    fun enableProfilePhotos(v: Boolean) {
         profilePhotos = v
         room.useProfilePictures = v
         prefs.edit().putBoolean(KEY_PHOTOS, v).apply()
