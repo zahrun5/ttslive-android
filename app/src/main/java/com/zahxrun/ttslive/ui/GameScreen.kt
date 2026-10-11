@@ -212,13 +212,12 @@ private fun QuestionCard(q: QuestionView, modifier: Modifier) {
                 textAlign = TextAlign.Center,
             )
             if (q.solved && q.winnerName != null) {
-                Text(
-                    "${q.winnerEmoji.orEmpty()} ${q.winnerName}".trim(),
+                AvatarLabel(
+                    avatar = q.winnerEmoji,
+                    text = q.winnerName ?: "",
                     color = OkDark,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .padding(top = 4.dp)
                         .clip(CircleShape)
@@ -254,13 +253,12 @@ private fun Leaderboard(entries: List<LeaderboardEntry>) {
                         fontSize = 13.sp,
                         modifier = Modifier.size(22.dp),
                     )
-                    Text(
-                        "${e.emoji} ${e.player}".trim(),
+                    AvatarLabel(
+                        avatar = e.emoji,
+                        text = e.player,
                         color = TextMain,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
                     Text("${e.score}", color = Lilac, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -329,8 +327,11 @@ private fun SummaryOverlay(summary: RoundSummary) {
                 Text("Juara ronde ini", color = Muted, fontSize = 12.sp)
                 val medals = listOf("🥇", "🥈", "🥉")
                 summary.top.forEachIndexed { i, e ->
-                    Text(
-                        "${medals.getOrElse(i) { "" }} ${e.emoji} ${e.player} • +${e.points}",
+                    AvatarLabel(
+                        avatar = e.emoji,
+                        text = e.player,
+                        prefix = medals.getOrElse(i) { "" },
+                        suffix = " • +${e.points}",
                         color = TextMain,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
@@ -340,7 +341,7 @@ private fun SummaryOverlay(summary: RoundSummary) {
             if (summary.total.isNotEmpty()) {
                 Text("Skor total", color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
                 summary.total.forEach { e ->
-                    Text("${e.emoji} ${e.player}  ${e.score}".trim(), color = Lilac, fontSize = 14.sp)
+                    AvatarLabel(avatar = e.emoji, text = e.player, suffix = "  ${e.score}", color = Lilac, fontSize = 14.sp)
                 }
             }
             Text("Soal baru sebentar lagi...", color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))

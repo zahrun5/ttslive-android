@@ -193,12 +193,11 @@ private fun SKSlotCard(slot: SusunKataSlot) {
             }
         }
         if (solved) {
-            Text(
-                "${slot.solvedByEmoji} ${slot.solvedBy}".trim(),
+            AvatarLabel(
+                avatar = slot.solvedByEmoji,
+                text = slot.solvedBy,
                 color = Muted,
                 fontSize = 10.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp, start = 32.dp),
             )
         }
@@ -229,13 +228,12 @@ private fun SKLeaderboard(entries: List<LeaderboardEntry>) {
                         fontSize = 13.sp,
                         modifier = Modifier.size(22.dp),
                     )
-                    Text(
-                        "${e.emoji} ${e.player}".trim(),
+                    AvatarLabel(
+                        avatar = e.emoji,
+                        text = e.player,
                         color = TextMain,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
                     Text("${e.score}", color = Lilac, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -263,8 +261,11 @@ private fun SKSummaryOverlay(summary: RoundSummary) {
                 Text("Penyusun terbaik", color = Muted, fontSize = 12.sp)
                 val medals = listOf("🥇", "🥈", "🥉")
                 summary.top.forEachIndexed { i, e ->
-                    Text(
-                        "${medals.getOrElse(i) { "" }} ${e.emoji} ${e.player} • +${e.points}",
+                    AvatarLabel(
+                        avatar = e.emoji,
+                        text = e.player,
+                        prefix = medals.getOrElse(i) { "" },
+                        suffix = " • +${e.points}",
                         color = TextMain,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,

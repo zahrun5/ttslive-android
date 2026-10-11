@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -63,6 +64,39 @@ fun SetupScreen(
                 }
                 if (rowModes.size == 1) Spacer(Modifier.weight(1f))
             }
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Rotasi game acak", color = TextMain, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text("Habis tiap ronde, pindah ke game lain", color = Muted, fontSize = 12.sp)
+            }
+            Switch(checked = vm.rotationEnabled, onCheckedChange = { vm.setRotationEnabled(it) })
+        }
+        if (vm.rotationEnabled) {
+            Text("Game yang ikut diacak (minimal 2):", color = Muted, fontSize = 12.sp)
+            GameMode.entries.chunked(2).forEach { rowModes ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    rowModes.forEach { mode ->
+                        FilterChip(
+                            selected = mode in vm.rotationPool,
+                            onClick = { vm.toggleRotationMode(mode) },
+                            label = { Text(mode.label) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    if (rowModes.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Pakai foto profil TikTok", color = TextMain, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text("Avatar pemain = foto profil, bukan emoji", color = Muted, fontSize = 12.sp)
+            }
+            Switch(checked = vm.profilePhotos, onCheckedChange = { vm.setProfilePhotos(it) })
         }
 
         Spacer(Modifier.height(4.dp))

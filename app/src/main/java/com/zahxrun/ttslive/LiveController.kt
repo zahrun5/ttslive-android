@@ -22,6 +22,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import kotlin.random.Random
 
 /**
  * Otak sesi live. Satu instance per proses (singleton), BUKAN per Activity, jadi tetap hidup
@@ -38,6 +39,15 @@ class LiveController private constructor(private val app: Application) {
     var username by mutableStateOf(prefs.getString(KEY_USER, "") ?: "")
     var apiKey by mutableStateOf(prefs.getString(KEY_API, "") ?: "")
     var selectedGame by mutableStateOf(GameMode.FAMILY_100)
+        private set
+
+    /** Rotasi game acak: habis tiap ronde, pindah ke game lain dari [rotationPool]. */
+    var rotationEnabled by mutableStateOf(prefs.getBoolean(KEY_ROTATE, false))
+        private set
+    var rotationPool by mutableStateOf(loadPool())
+        private set
+    /** Pakai foto profil TikTok sebagai avatar (bukan emoji acak). */
+    var profilePhotos by mutableStateOf(prefs.getBoolean(KEY_PHOTOS, false))
         private set
 
     private var room = buildRoom()
@@ -72,7 +82,32 @@ class LiveController private constructor(private val app: Application) {
             GameMode.SAMBUNG_KATA -> SambungKataGame(app)
             GameMode.TTS -> TtsGame(app)
         }
-        return Room(game)
+        return Room(game).also { it.useProfilePictures = profilePhotos }
+    }
+
+    private fun loadPool(): Set<GameMode> {
+        val raw = prefs.getString(KEY_POOL, null) ?: return GameMode.entries.toSet()
+        val set = raw.split(",").mapNotNull { n -> GameMode.entries.firstOrNull { it.name == n } }.toSet()
+        return if (set.size >= 2) set else GameMode.entries.toSet()
+    }
+
+    fun setRotationEnabled(v: Boolean) {
+        rotationEnabled = v
+        prefs.edit().putBoolean(KEY_ROTATE, v).apply()
+    }
+
+    /** Minimal 2 game di pool supaya rotasi ada artinya; toggle terakhir diabaikan. */
+    fun toggleRotationMode(mode: GameMode) {
+        val next = if (mode in rotationPool) rotationPool - mode else rotationPool + mode
+        if (next.size < 2) return
+        rotationPool = next
+        prefs.edit().putString(KEY_POOL, next.joinToString(",") { it.name }).apply()
+    }
+
+    fun setProfilePhotos(v: Boolean) {
+        profilePhotos = v
+        room.useProfilePictures = v
+        prefs.edit().putBoolean(KEY_PHOTOS, v).apply()
     }
 
     fun switchGame(mode: GameMode) {
@@ -103,7 +138,7 @@ class LiveController private constructor(private val app: Application) {
                 scope.launch { setConn(state, detail) }
             }
             override fun onChat(player: String, text: String, profileUrl: String?) {
-                scope.launch { onComment(player, text) }
+                scope.launch { onComment(player, text, profileUrl) }
             }
         })
         client = c
@@ -125,8 +160,8 @@ class LiveController private constructor(private val app: Application) {
         onStatus?.invoke(state, detail)
     }
 
-    fun onComment(player: String, text: String) {
-        val outcome = room.handleChat(player, text)
+    fun onComment(player: String, text: String, profileUrl: String? = null) {
+        val outcome = room.handleChat(player, text, profileUrl)
         snapshot = room.snapshot()
         if (outcome.result?.ok == true) saveScores()
         if (outcome.roundCompleted) scheduleAdvance()
@@ -143,9 +178,27 @@ class LiveController private constructor(private val app: Application) {
         advanceJob?.cancel()
         advanceJob = scope.launch {
             delay(room.summaryDurationMs())
-            room.advance()
+            val next = pickNextGame()
+            if (next == null) {
+                room.advance()
+            } else {
+                // Ganti game tanpa memutus koneksi live: skor dan avatar dibawa ke Room baru.
+                val scores = room.exportScores()
+                val avatars = room.exportAvatars()
+                selectedGame = next
+                room = buildRoom().also {
+                    it.importScores(scores)
+                    it.importAvatars(avatars)
+                }
+            }
             snapshot = room.snapshot()
         }
+    }
+
+    private fun pickNextGame(): GameMode? {
+        if (!rotationEnabled) return null
+        val options = rotationPool.filter { it != selectedGame }
+        return if (options.isEmpty()) null else options.random(Random.Default)
     }
 
     private fun saveScores() {
@@ -169,6 +222,9 @@ class LiveController private constructor(private val app: Application) {
         private const val KEY_USER = "username"
         private const val KEY_API = "apiKey"
         private const val KEY_SCORES = "scores"
+        private const val KEY_ROTATE = "rotate"
+        private const val KEY_POOL = "pool"
+        private const val KEY_PHOTOS = "photos"
         private const val IDLE_DETAIL = "Belum tersambung (mode tes)"
 
         @Volatile private var instance: LiveController? = null

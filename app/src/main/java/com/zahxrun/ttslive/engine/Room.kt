@@ -43,12 +43,15 @@ class Room(
     var awaitingAdvance = false
         private set
 
-    fun handleChat(player: String, text: String): ChatOutcome {
+    /** True = avatar pemain memakai URL foto profil TikTok (kalau ada), bukan emoji acak. */
+    var useProfilePictures = false
+
+    fun handleChat(player: String, text: String, profileUrl: String? = null): ChatOutcome {
         val name = player.trim().ifEmpty { "Anonim" }
         val msg = text.take(MAX_COMMENT_LEN)
         if (msg.isBlank()) return ChatOutcome()
 
-        val emoji = avatarFor(name)
+        val emoji = avatarFor(name, profileUrl)
         chat.addLast(ChatLine(name, msg))
         while (chat.size > CHAT_KEEP) chat.removeFirst()
 
@@ -121,8 +124,21 @@ class Room(
         durationMs = summaryMs,
     )
 
-    private fun avatarFor(name: String): String {
-        avatars[name]?.let { return it }
+    fun exportAvatars(): Map<String, String> = LinkedHashMap(avatars)
+
+    fun importAvatars(map: Map<String, String>) {
+        avatars.clear()
+        avatars.putAll(map)
+    }
+
+    private fun avatarFor(name: String, profileUrl: String?): String {
+        if (useProfilePictures && profileUrl != null && profileUrl.startsWith("http")) {
+            avatars[name] = profileUrl
+            return profileUrl
+        }
+        // Foto profil hanya dipakai kalau fitur aktif; kalau tidak, buang URL lama.
+        val cur = avatars[name]
+        if (cur != null && (useProfilePictures || !cur.startsWith("http"))) return cur
         val used = avatars.values.toSet()
         val free = AVATAR_POOL.filter { it !in used }
         val pick = (if (free.isNotEmpty()) free else AVATAR_POOL).random(random)

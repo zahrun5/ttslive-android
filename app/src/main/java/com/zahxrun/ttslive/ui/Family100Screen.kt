@@ -150,7 +150,7 @@ private fun BoardRow(index: Int, slot: BoardSlot?) {
             Text(slot.text, color = TextMain, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             Column(horizontalAlignment = Alignment.End) {
                 Text("${slot.points} poin", color = Ok, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text("${slot.foundByEmoji} ${slot.foundBy}".trim(), color = Muted, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                AvatarLabel(avatar = slot.foundByEmoji, text = slot.foundBy, color = Muted, fontSize = 11.sp)
             }
         } else {
             Text("???", color = Muted, fontSize = 16.sp, modifier = Modifier.weight(1f))
@@ -176,7 +176,7 @@ private fun F100Leaderboard(entries: List<LeaderboardEntry>) {
             entries.take(5).forEachIndexed { i, e ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("${i + 1}", color = if (i == 0) Gold else Muted, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp, modifier = Modifier.size(22.dp))
-                    Text("${e.emoji} ${e.player}".trim(), color = TextMain, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    AvatarLabel(avatar = e.emoji, text = e.player, color = TextMain, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                     Text("${e.score}", color = Lilac, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
             }
@@ -198,7 +198,7 @@ private fun F100SummaryOverlay(summary: RoundSummary) {
                 Text("Penjawab terbaik", color = Muted, fontSize = 12.sp)
                 val medals = listOf("🥇", "🥈", "🥉")
                 summary.top.forEachIndexed { i, e ->
-                    Text("${medals.getOrElse(i){""}} ${e.emoji} ${e.player} • +${e.points}", color = TextMain, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    AvatarLabel(avatar = e.emoji, text = e.player, prefix = medals.getOrElse(i) { "" }, suffix = " • +${e.points}", color = TextMain, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Text("Soal baru sebentar lagi...", color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))

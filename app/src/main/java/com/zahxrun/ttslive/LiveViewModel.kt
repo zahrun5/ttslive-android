@@ -39,6 +39,13 @@ class LiveViewModel(app: Application) : AndroidViewModel(app) {
     val connDetail: String get() = c.connDetail
     val isLive: Boolean get() = c.isLive
 
+    val rotationEnabled: Boolean get() = c.rotationEnabled
+    val rotationPool: Set<GameMode> get() = c.rotationPool
+    val profilePhotos: Boolean get() = c.profilePhotos
+    fun setRotationEnabled(v: Boolean) = c.setRotationEnabled(v)
+    fun toggleRotationMode(m: GameMode) = c.toggleRotationMode(m)
+    fun setProfilePhotos(v: Boolean) = c.setProfilePhotos(v)
+
     var streamKey: String
         get() = e.streamKey
         set(v) { e.streamKey = v }
